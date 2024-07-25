@@ -1,7 +1,10 @@
-from t_cell_sim.sample.distributions import generate_binned_gamma, generate_fate_prob_from_affinity_bins
+from src.core.distributions import generate_binned_gamma
+from src.plotting.model_utils import generate_fate_prob_from_affinity_bins
 from seq_plotter import SeqPlotter
-from t_cell_sim.utils import f_norm
-
+from src.utils import f_norm
+"""
+For debugging purposes only. This script is not used in the Streamlit app.
+"""
 if __name__ == "__main__":
 
     num_bins = 1000
@@ -21,3 +24,6 @@ if __name__ == "__main__":
     seq_plotter = SeqPlotter(t_cells)
     seq_plotter.plotly_stacked_bar_plot()
     seq_plotter.plotly_density_plot()
+    types_to_cum_density = seq_plotter.calculate_cumulative_densities()
+    for k, v in types_to_cum_density.items():
+        print(f"Joint cumulative density of T cell type *{k}* is {v:.23}")

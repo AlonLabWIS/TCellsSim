@@ -1,8 +1,8 @@
-from typing import Union, Sequence, Callable, List
+from typing import Union, Sequence
 import numpy as np
 import scipy.stats as st
 
-from .t_cells import TCellProb, TCellsFactory, TCellType
+from .t_cells import TCellType
 
 
 def complement_dist(prob_arr: np.array, *prob_arrs: np.array, return_stacked=False) -> np.array:
@@ -29,7 +29,7 @@ def complement_dist(prob_arr: np.array, *prob_arrs: np.array, return_stacked=Fal
 def sample_types_from_dist(probs: np.array, t_cell_types: Union[None, Sequence[TCellType]] = None,
                            repeats: int = 1) -> np.array:
     """
-    Use the inverse transform sampling method to sample from a vector of cumulative probabilities.
+    Use the inverse transform sampling method to core from a vector of cumulative probabilities.
     :param probs: An array of cumulative probabilities, shape is (L,N) where L is the number of categories.
     Each of the N columns MUST some up to 1. Each column is a categorical distribution.
     :param t_cell_types: Optional. Labels for each categorical distribution. Of size (L,). If `None`, labels
@@ -61,45 +61,35 @@ def sample_types_from_dist(probs: np.array, t_cell_types: Union[None, Sequence[T
         return numerical_types
 
 
-def generate_fate_prob_from_affinity_bins(affinity_bins: np.array, affinity_density: np.array,
-                                          f_conv: Callable[[np.array], np.array],
-                                          f_reg: Callable[[np.array], np.array]) -> Sequence[TCellProb]:
-    conv_density = f_conv(affinity_bins)
-    reg_density = f_reg(affinity_bins)
-    full_density_per_bin = complement_dist(conv_density, reg_density, return_stacked=True)
-    t_cell_types = [TCellType.CONV, TCellType.REG, TCellType.DEAD]
-    t_cells: List[TCellProb] = [None] * full_density_per_bin.size
-    for i in range(affinity_density.size):
-        affinity_density_at_i = affinity_density.item(i)
-        affinity = affinity_bins.item(i)
-        for j, t_cell_type in enumerate(t_cell_types):
-            prob_at_affinity = full_density_per_bin.item(j, i)
-            t_cells[i * len(t_cell_types) + j] = TCellsFactory.create_t_cell(t_cell_type, affinity,
-                                                                             prob_at_affinity,
-                                                                             affinity_density_at_i)
-    return t_cells
-
-
-def generate_affinities_gamma_distrib(num_t_cells: int = int(10e6), alpha_hyper: float = 2.,
-                                      beta_hyper: Union[None, float] = None):
+def generate_gamma_distrib(n_samples: int = int(10e6), alpha_hyper: float = 2.,
+                           beta_hyper: Union[None, float] = None) -> np.array:
+    """
+    Sample from the gamma distribution with hyperparameters `alpha_hyper` and `beta_hyper` for `n_samples` times.
+    :return: An array of samples from the gamma distribution with size `(n_samples,)`.
+    """
     g = _generate_gamma_dist(alpha_hyper, beta_hyper)
-    return np.sort(g.rvs(num_t_cells))
+    return np.sort(g.rvs(n_samples))
 
 
 def generate_binned_gamma(num_bins: int, top_cutoff_bin: float = 0.999, alpha_hyper: float = 2.,
-                          beta_hyper: Union[None, float] = None) -> np.array:
+                          beta_hyper: Union[None, float] = None) -> (np.array, np.array):
+    """
+    Generate the pdf of a gamma distribution with hyperparameters `alpha_hyper` and `beta_hyper`.
+
+    The number of samplings of the PDF is `num_bins`. The PDF is sampled up to the `top_cutoff_bin` quantile, starting
+    from zero.
+    :returns:
+        - bins - The values for which the density function is evaluated. A float array of shape (`num_bins`).
+        - density - The respecting values for each bin. A float array of shape (`num_bins`).
+    """
     g = _generate_gamma_dist(alpha_hyper, beta_hyper)
     top_bin_val = g.ppf(top_cutoff_bin)
     bins = np.linspace(0, top_bin_val, num_bins)
     return bins, g.pdf(bins)
 
 
-def _generate_gamma_dist(alpha_hyper: float, beta_hyper: Union[None, float]) -> np.array:
-    if beta_hyper is None:
-        g = st.gamma(alpha_hyper)
-    else:
-        g = st.gamma(alpha_hyper, beta_hyper)
-    return g
+def _generate_gamma_dist(alpha_hyper: float, beta_hyper: float = 1) -> np.array:
+    return st.gamma(alpha_hyper, beta_hyper)
 
 
 def _check_no_zero_prob(dist_arr: np.array) -> None:
