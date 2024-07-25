@@ -1,6 +1,7 @@
 import os
 import sys
 os.chdir(os.path.join(os.path.dirname(__file__), "..", ".."))  # Change working directory to root of the project
+sys.path.append('.')
 
 print(os.getcwd())
 print(sys.path)
