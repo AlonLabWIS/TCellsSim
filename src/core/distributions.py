@@ -62,7 +62,7 @@ def sample_types_from_dist(probs: np.array, t_cell_types: Union[None, Sequence[T
 
 
 def generate_gamma_distrib(n_samples: int = int(10e6), alpha_hyper: float = 2.,
-                           beta_hyper: float = 1.) -> np.array:
+                           beta_hyper: float = 0.) -> np.array:
     """
     Sample from the gamma distribution with hyperparameters `alpha_hyper` and `beta_hyper` for `n_samples` times.
     :return: An array of samples from the gamma distribution with size `(n_samples,)`.
@@ -72,7 +72,7 @@ def generate_gamma_distrib(n_samples: int = int(10e6), alpha_hyper: float = 2.,
 
 
 def generate_binned_gamma(num_bins: int, top_cutoff_bin: float = 0.999, alpha_hyper: float = 2.,
-                          beta_hyper: float = 1.0) -> (np.array, np.array):
+                          beta_hyper: float = 0.) -> (np.array, np.array):
     """
     Generate the pdf of a gamma distribution with hyperparameters `alpha_hyper` and `beta_hyper`.
 
