@@ -1,14 +1,6 @@
-import os
-import sys
-os.chdir(os.path.join(os.path.dirname(__file__), "..", ".."))  # Change working directory to root of the project
-sys.path.append('.')
-
-print(os.getcwd())
-print(sys.path)
-
 from src.core.distributions import generate_binned_gamma
 from src.plotting.model_utils import generate_fate_prob_from_affinity_bins
-from seq_plotter import SeqPlotter
+from src.plotting.seq_plotter import SeqPlotter
 from src.utils import f_norm
 
 import streamlit as st
