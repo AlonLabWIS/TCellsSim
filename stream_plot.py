@@ -18,8 +18,10 @@ if __name__ == "__main__":
         with st.container(border=True):
             st.subheader(r"Parameters for Gaussians $f_{reg}$ and $f_{conv}$:", divider="grey")
             st.text("Factors stretch the function, there is no constraint for the Gaussians to be a distribution." +
-                    "\n\nFor `factor=1` the Gaussian is a normal distribution.")
-            st.text("It is enforced that")
+                    "\n\nFor `factor=1` the Gaussian is a normal distribution. " +
+                    "Negative skew is left-skewed and vice versa.")
+            st.text("It is enforced that the sum of both functions at each affinity value is less than 1.")
+            skew = st.slider("Choose skewness for the Gaussians:", -5., 5., 0., 0.05)
             col_conv, col_reg = st.columns(2)
             # conv parameters
             with col_conv:
@@ -33,8 +35,8 @@ if __name__ == "__main__":
                 f0_reg = st.slider(r"${factor}_{reg}$:", 0.5, 5., 1.5, 0.1)
 
     # Initialize functions to derive conv, reg distribution per affinity. Sum should not exceed 1 anywhere.
-    f_conv = f_norm(mu_conv, sigma_conv, f0_conv)
-    f_reg = f_norm(mu_reg, sigma_reg, f0_reg)
+    f_conv = f_norm(mu_conv, sigma_conv, f0_conv, skew)
+    f_reg = f_norm(mu_reg, sigma_reg, f0_reg, skew)
 
     bins, affinities = generate_binned_gamma(num_bins, alpha_hyper=alpha)
     # Graphs column
@@ -57,3 +59,5 @@ if __name__ == "__main__":
                 types_to_cum_density = seq_plotter.calculate_cumulative_densities()
                 for k, v in types_to_cum_density.items():
                     st.write(f"Joint cumulative density *{k}* is {v:.3}")
+                t_reg_rate = seq_plotter.calculate_reg_ratio_from_living()
+                st.write(f"Regulatory T-cell to living T-cells ratio is: {t_reg_rate:.2f}")

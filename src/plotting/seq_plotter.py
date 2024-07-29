@@ -1,9 +1,8 @@
 from typing import Sequence, Dict, List
 
-from src.core.t_cells import TCellProb
+from src.core.t_cells import TCellProb, TCellType
 
 import pandas as pd
-import numpy as np
 from scipy.integrate import trapezoid
 import plotly.express as px
 import plotly.graph_objects as go
@@ -54,6 +53,21 @@ class SeqPlotter:
                                                  density_of_type[SeqPlotter._df_columns[0]])
             type_to_density[str(t_cell_type)] = joint_cumulative_density
         return type_to_density
+
+    def calculate_reg_ratio_from_living(self) -> float:
+        """
+        Calculate the ratio of regulatory T-cells to living T-cells
+        :return:
+        """
+        density_plot = self.__create_density_plot()
+        density_plot = density_plot.groupby(SeqPlotter._df_columns[3])
+        reg_density = density_plot.get_group(str(TCellType.REG))
+        conv_density = density_plot.get_group(str(TCellType.CONV))
+        reg_cumulative_density = trapezoid(reg_density[SeqPlotter._df_columns[2]],
+                                           reg_density[SeqPlotter._df_columns[0]])
+        conv_cumulative_density = trapezoid(conv_density[SeqPlotter._df_columns[2]],
+                                            conv_density[SeqPlotter._df_columns[0]])
+        return reg_cumulative_density / (reg_cumulative_density + conv_cumulative_density)
 
     @property
     def df(self) -> pd.DataFrame:
