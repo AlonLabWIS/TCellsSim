@@ -1,8 +1,10 @@
-from src.core.distributions import generate_binned_gamma
+from src.core.distributions import generate_binned_gamma, cdf_from_distribution
+from src.core.t_cells import TCellType
 from src.plotting.model_utils import generate_fate_prob_from_affinity_bins
 from src.plotting.seq_plotter import SeqPlotter
 from src.utils import f_norm
 
+import numpy as np
 import streamlit as st
 
 if __name__ == "__main__":
@@ -49,15 +51,27 @@ if __name__ == "__main__":
             st.stop()
         else:
             seq_plotter = SeqPlotter(t_cells)
+            min_dead = seq_plotter.find_minimal_affinity_for_type(TCellType.DEAD)
             with st.container(border=True):
                 st.subheader("Distribution at each affinity:", divider="grey")
                 st.plotly_chart(seq_plotter.plotly_stacked_bar_plot())
             with st.container(border=True):
                 st.subheader("Density plot of the distribution:", divider="grey")
-                st.plotly_chart(seq_plotter.plotly_density_plot())
+                plotly_density_plot = seq_plotter.plotly_density_plot()
+                for val in min_dead:
+                    plotly_density_plot.add_vline(val, line_dash="dash", line_color="grey",
+                                                  annotation_text=f"Positive selection ≤{val:.2f} <br> Negative selection ≥{val:.2f}")
+                st.plotly_chart(plotly_density_plot)
                 # Print joint density for each T-cell type
                 types_to_cum_density = seq_plotter.calculate_cumulative_densities()
                 for k, v in types_to_cum_density.items():
                     st.write(f"Joint cumulative density *{k}* is {v:.3}")
                 t_reg_rate = seq_plotter.calculate_reg_ratio_from_living()
                 st.write(f"Regulatory T-cell to living T-cells ratio is: {t_reg_rate:.2f}")
+                if len(min_dead) == 1:
+                    affinities, dead_density = seq_plotter.get_affinity_joint_density_per_type(TCellType.DEAD)
+                    percentage_neglect = cdf_from_distribution(affinities, dead_density, min_dead[0], False) * 100
+                    total_dead = cdf_from_distribution(affinities, dead_density, np.inf, False) * 100
+                    st.write(
+                        f"Death by neglect: {percentage_neglect:.2f}%  \n Death by negative selection:"
+                        f" {total_dead - percentage_neglect:.2f}%")

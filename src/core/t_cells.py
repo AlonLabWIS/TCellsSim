@@ -1,5 +1,6 @@
 from abc import ABCMeta
 from enum import Enum
+from typing import Sequence
 
 
 class TCellType(Enum):
@@ -118,3 +119,13 @@ class TCellsProbFactory:
             return DeadTCellProb(self_affinity, prob_at_affinity, total_density_at_affinity)
         else:
             return Thymocyte(self_affinity, prob_at_affinity, total_density_at_affinity)
+
+
+def filter_by_type(t_cells: Sequence[TCellProb], t_cell_type: TCellType) -> Sequence[TCellProb]:
+    """
+    Filter the TCells by type.
+    :param t_cells: The TCells to filter.
+    :param t_cell_type: The type to filter by.
+    :return: The filtered TCells.
+    """
+    return [t_cell for t_cell in t_cells if t_cell.get_t_cell_type() is TCellType(t_cell_type)]

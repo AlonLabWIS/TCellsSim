@@ -1,4 +1,5 @@
 from src.core.distributions import generate_binned_gamma
+from src.core.t_cells import TCellType
 from src.plotting.model_utils import generate_fate_prob_from_affinity_bins
 from seq_plotter import SeqPlotter
 from src.utils import f_norm
@@ -22,6 +23,9 @@ if __name__ == "__main__":
     bins, affinities = generate_binned_gamma(num_bins, alpha_hyper=alpha)
     t_cells = generate_fate_prob_from_affinity_bins(bins, affinities, f_conv, f_reg)
     seq_plotter = SeqPlotter(t_cells)
+    min_dead = seq_plotter.find_minimal_affinity_for_type(TCellType.DEAD)
+    for val in min_dead:
+        print(f"Positive selection ≤{val:.2f} < Negative selection ≥{val:.2f}")
     seq_plotter.plotly_stacked_bar_plot()
     seq_plotter.plotly_density_plot()
     types_to_cum_density = seq_plotter.calculate_cumulative_densities()
